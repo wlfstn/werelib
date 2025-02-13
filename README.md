@@ -1,6 +1,7 @@
-# werestl | Were Standard Template Library
+# werelib | C++ Library
+Namespace `were`
 
-Not a replacement for the standard template library, but rather a core library meant to enhance the code base.
+Not meant to replace the Standard Template Library, but meant to give some alterations and enhancements when writing C++.
 
 ## History
 Project started 2025, February 23rd.
