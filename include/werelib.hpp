@@ -1,5 +1,10 @@
 #pragma once
 
+#include <bit>
+#include <array>
+#include <cstddef>
+#include <type_traits>
+
 namespace were {
 	using byte = unsigned char;
 
@@ -16,5 +21,27 @@ namespace were {
 	template <typename T, typename U>
 	[[nodiscard]] constexpr T as(U&& value) noexcept {
 		return static_cast<T>(value);
+	}
+	
+	template <typename T, typename U>
+	[[nodiscard]] constexpr T asraw(U&& value) noexcept {
+		return reinterpret_cast<T>(value);
+	}
+
+	template <typename T>
+	[[nodiscard]] constexpr auto asBytes(const T& value) noexcept -> std::array<byte, sizeof(T)> {
+		static_assert(std::is_trivially_copyable_v<T>, "to_bytes requires a trivially copyable type");
+		union {
+			T input;
+			std::array<byte, sizeof(T)> output;
+		} u = { value };
+		return u.output;
+	}
+
+	template <typename T>
+	constexpr T bigEndianSwap(T value) {
+		return std::endian::native == std::endian::little
+			? std::byteswap(value)
+			: value;
 	}
 }
