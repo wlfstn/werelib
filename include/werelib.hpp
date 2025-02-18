@@ -18,16 +18,19 @@ namespace were {
 	using i32 = signed int;
 	using i64 = signed long long;
 
-	template <typename T, typename U>
-	[[nodiscard]] constexpr T as(U&& value) noexcept {
-		return static_cast<T>(value);
+	// were::as<T>(V) in lieu of static_cast<T>(V)
+	template <typename ToType, typename From>
+	[[nodiscard]] consteval ToType as(From&& value) noexcept {
+		return static_cast<ToType>(value);
 	}
 	
-	template <typename T, typename U>
-	[[nodiscard]] constexpr T asraw(U&& value) noexcept {
-		return reinterpret_cast<T>(value);
+	// were::asraw<T>(V) in lieu of reinterpret_cast<T>(V)
+	template <typename ToType, typename From>
+	[[nodiscard]] consteval ToType asraw(From&& value) noexcept {
+		return reinterpret_cast<ToType>(value);
 	}
 
+	// were::asBytes(V);
 	template <typename T>
 	[[nodiscard]] constexpr auto asBytes(const T& value) noexcept -> std::array<byte, sizeof(T)> {
 		static_assert(std::is_trivially_copyable_v<T>, "to_bytes requires a trivially copyable type");
@@ -37,11 +40,18 @@ namespace were {
 		} u = { value };
 		return u.output;
 	}
-
+	
+	// were::bigEndianSwap(V)
 	template <typename T>
 	constexpr T bigEndianSwap(T value) {
 		return std::endian::native == std::endian::little
 			? std::byteswap(value)
 			: value;
+	}
+
+	// were::packByte(V1, V2)
+	consteval u16 packBytes(byte a, byte b) {
+		std::array<byte, 2> data = { a, b };
+		return std::bit_cast<std::uint16_t>(data);
 	}
 }
