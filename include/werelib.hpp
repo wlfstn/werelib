@@ -26,7 +26,7 @@ namespace were {
 	
 	// were::asraw<T>(V) in lieu of reinterpret_cast<T>(V)
 	template <typename ToType, typename From>
-	[[nodiscard]] consteval ToType asraw(From&& value) noexcept {
+	[[nodiscard]] constexpr ToType asraw(From&& value) noexcept {
 		return reinterpret_cast<ToType>(value);
 	}
 
