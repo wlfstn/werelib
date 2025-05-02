@@ -1,3 +1,4 @@
+```cpp
 #include "../include/werelib.hpp"
 #include <iostream>
 #include <vector>
@@ -13,3 +14,4 @@ int main() {
 	<< "hex value: 0x" << std::hex << std::setw(8) << std::setfill('0') << i <<"\n"
 	<< "hex value Endian Swap: 0x" << x << std::endl;
 }
+```
