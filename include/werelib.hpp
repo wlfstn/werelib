@@ -18,16 +18,21 @@ namespace were {
 	using i32 = signed int;
 	using i64 = signed long long;
 
-	// were::as<T>(V) in lieu of static_cast<T>(V)
+	using f32 = float;
+	using f64 = double;
+
+	// were::as<T>(V)
+	// static_cast alias at compile time
 	template <typename ToType, typename From>
-	[[nodiscard]] consteval ToType as(From&& value) noexcept {
+	[[nodiscard]] constexpr ToType as(From&& value) noexcept {
 		return static_cast<ToType>(value);
 	}
 	
-	// were::asraw<T>(V) in lieu of reinterpret_cast<T>(V)
+	// were::asraw<T>(V)
+	// reinterpret_cast without undefined behavior alias at compile time
 	template <typename ToType, typename From>
 	[[nodiscard]] constexpr ToType asraw(From&& value) noexcept {
-		return reinterpret_cast<ToType>(value);
+		return std::bit_cast<ToType>(value);
 	}
 
 	// were::asBytes(V);
@@ -41,17 +46,12 @@ namespace were {
 		return u.output;
 	}
 	
-	// were::bigEndianSwap(V)
+	// were::bigEndianSwap(V) 
+	// Convert little endian to big endian (only on little endian machines)
 	template <typename T>
 	constexpr T bigEndianSwap(T value) {
 		return std::endian::native == std::endian::little
 			? std::byteswap(value)
 			: value;
-	}
-
-	// were::packByte(V1, V2)
-	consteval u16 packBytes(byte a, byte b) {
-		std::array<byte, 2> data = { a, b };
-		return std::bit_cast<std::uint16_t>(data);
 	}
 }
