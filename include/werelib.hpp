@@ -6,6 +6,11 @@
 #include <type_traits>
 
 namespace were {
+	
+	////////////////////////////////
+	// [DATA ALIASES]
+	////////////////////////////////
+
 	using byte = unsigned char;
 
 	using u8 = unsigned char;
@@ -20,22 +25,27 @@ namespace were {
 
 	using f32 = float;
 	using f64 = double;
-
-	// were::as<T>(V)
-	// static_cast alias at compile time
+	
+	////////////////////////////////
+	// [GENERAL TEMPLATES]
+	////////////////////////////////
+	
+	// [EXAMPLE]			-- were::as<T>(V)
+	// [DESCRIPTION] 	-- static_cast alias at compile time
 	template <typename ToType, typename From>
 	[[nodiscard]] constexpr ToType as(From&& value) noexcept {
 		return static_cast<ToType>(value);
 	}
 	
-	// were::asraw<T>(V)
-	// reinterpret_cast without undefined behavior alias at compile time
+	// [EXAMPLE]			-- were::asraw<T>(V)
+	// [DESCRIPTION]	-- reinterpret_cast alias at compile time
 	template <typename ToType, typename From>
 	[[nodiscard]] constexpr ToType asraw(From&& value) noexcept {
-		return std::bit_cast<ToType>(value);
+		return reinterpret_cast<ToType>(value);
 	}
-
-	// were::asBytes(V);
+	
+	// [EXAMPLE]			-- were::asBytes(V); || std::array<were::bytes, n>
+	// [DESCRIPTION]	-- Convert data into an array of bytes
 	template <typename T>
 	[[nodiscard]] constexpr auto asBytes(const T& value) noexcept -> std::array<byte, sizeof(T)> {
 		static_assert(std::is_trivially_copyable_v<T>, "to_bytes requires a trivially copyable type");
@@ -46,12 +56,12 @@ namespace were {
 		return u.output;
 	}
 	
-	// were::bigEndianSwap(V) 
-	// Convert little endian to big endian (only on little endian machines)
+	// [EXAMPLE]			-- were::bigEndianSwap(V) 
+	// [DESCRIPTION]	-- Convert endian order (only on little endian devices)
 	template <typename T>
 	constexpr T bigEndianSwap(T value) {
 		return std::endian::native == std::endian::little
-			? std::byteswap(value)
-			: value;
+		? std::byteswap(value)
+		: value;
 	}
 }
