@@ -8,6 +8,16 @@
 
 namespace were::winsock {
 	consteval u16 winsock_version = 0x0202; // Sets the winsock version to 2.2 which is the latest since 1996
+	consteval int IP = AF_INET // 2 : internetwork: UDP, TCP, etc.
+
+	// Socket types for winsock 2.2
+	namespace ST { 
+		consteval int TCP = SOCK_STREAM;		// 1 : stream socket
+		consteval int UDP = SOCK_DGRAM;			// 2 : datagram socket
+		consteval int RAW = SOCK_RAW;				// 3 : raw-protocol interface
+		consteval int RDM = SOCK_RDM; 			// 4 : reliably-delivered message
+		consteval int SEQ = SOCK_SEQPACKET;	// 5: sequenced packet stream
+	}
 
 	class Isocket {
 	private:
@@ -15,7 +25,7 @@ namespace were::winsock {
 		SOCKET sock_ = INVALID_SOCKET;
 	public:
 		// Constructor
-		explicit Isocket(uint16_t port) {
+		explicit Isocket(u16 port) {
 
 			// WSA Startup with winsock 2.2
 			if (WSAStartup(0x0202, &wsaData_) != 0) {
@@ -23,7 +33,7 @@ namespace were::winsock {
 			}
 
 			// Setup a socket that is internetwork: UDP, TCP, etc & datagram socket
-			sock_ = socket(AF_INET, SOCK_DGRAM, 0);
+			sock_ = socket(IP, ST::UDP, 0);
 			if (sock_ == INVALID_SOCKET) {
 				WSACleanup();
 				throw std::runtime_error("Failed to create socket.");
