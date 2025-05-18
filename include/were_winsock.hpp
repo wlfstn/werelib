@@ -5,6 +5,7 @@
 #include <stdexcept> // std::runtime_error
 #include <iostream> // std::cerr
 #include <format> // std::format
+#include <unordered_map> // std::unordered_map
 
 // windows socket
 namespace were::winsock {
@@ -48,7 +49,7 @@ namespace were::winsock {
 
 		int openSocket(int type, u16 port) {
 			// Setup a socket that is internetwork: UDP, TCP, etc & datagram socket
-			sock = socket(IP, type, 0);
+			SOCKET sock = socket(IP, type, 0);
 			if (sock == INVALID_SOCKET) {
 				throw std::runtime_error("Failed to create socket.");
 			}
@@ -88,7 +89,5 @@ namespace were::winsock {
 			}
 			throw std::out_of_range("Invalid socket ID");
 		}
-
-		
 	};
 }
