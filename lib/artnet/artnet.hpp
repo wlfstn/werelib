@@ -14,9 +14,9 @@ namespace were::artnet {
 
 	// Art-Net operation codes
 	enum class Op : u16 {
-    Poll      				= 0x2000, // This is an ArtPoll packet, no other data is contained in this UDP packet.
-    PollReply 				= 0x2100, // This is an ArtPollReply Packet. It contains device status information.
-    DiagData  				= 0x2300, // Diagnostics and data logging packet.
+		Poll      				= 0x2000, // This is an ArtPoll packet, no other data is contained in this UDP packet.
+		PollReply 				= 0x2100, // This is an ArtPollReply Packet. It contains device status information.
+		DiagData  				= 0x2300, // Diagnostics and data logging packet.
 		Command						= 0x2400, // This is an ArtCommand packet. It is used to send text based parameter commands.
 		DataRequest				= 0x2700, // This is an ArtDataRequest packet. It is used to request data such as products URLs.
 		DataReply 				= 0x2800, // his is an ArtDataReply packet. It is used to reply to ArtDataRequest packets.
@@ -58,10 +58,10 @@ namespace were::artnet {
 	enum class NodeFlag : u8 {
 		None									= 0x00,			// no bits set
 		SendPollReplyOnChange	= 1u << 1,	// Bit-1
-    ReceiveDiagnostics		= 1u << 2,  // Bit-2
-    UnicastDiagnostics		= 1u << 3,  // Bit-3
-    DisableVLC						= 1u << 4,  // Bit-4
-    EnableTargetedMode		= 1u << 5,  // Bit-5
+		ReceiveDiagnostics		= 1u << 2,	// Bit-2
+		UnicastDiagnostics		= 1u << 3,	// Bit-3
+		DisableVLC						= 1u << 4,	// Bit-4
+		EnableTargetedMode		= 1u << 5,	// Bit-5
 		// Bits 6 & 7 are reserved and must remain zero
 	};
 
@@ -74,5 +74,5 @@ namespace were::artnet {
 	u8 EstaManLo; 									// 12
 	u8 OemHi; 											// 13
 	u8 OemLo; 											// 14
-	
+
 }
