@@ -1,11 +1,12 @@
 #pragma once
 
-#include "./werelib.hpp"
 #include <winsock2.h> // WSAStartup
 #include <stdexcept> // std::runtime_error
 #include <iostream> // std::cerr
 #include <format> // std::format
 #include <unordered_map> // std::unordered_map
+
+#include "./werelib.hpp"
 
 // windows socket
 namespace were::winsock {
