@@ -53,25 +53,40 @@ namespace were::artnet {
 		DirectoryReply		= 0x9b00, // Replies to OpDirectory with file list.
 	};
 
-	u16 Version = 0x000E; // 1.4 or "14"
+	u16 ProtocolVersion = 0x000E; // 1.4 or "14"
+	u8 Sequence;
+	u8 Physical;
+	u8 SubUni;
+	u8 Net; // The top 7 bits of the 15 bit Port-Address to which this packet is destined.
+	u16 Length; // The length of the DMX512 data array. This value should be an even number in the range 2 – 512.
+	byte Data[512]; // A variable length array of DMX512 lighting data.
 
+	
+	// ---------------------------------------------
+	// Other ArtNet related messages
+	// ---------------------------------------------
 	enum class NodeFlag : u8 {
-		None									= 0x00,			// no bits set
-		SendPollReplyOnChange	= 1u << 1,	// Bit-1
-		ReceiveDiagnostics		= 1u << 2,	// Bit-2
-		UnicastDiagnostics		= 1u << 3,	// Bit-3
-		DisableVLC						= 1u << 4,	// Bit-4
-		EnableTargetedMode		= 1u << 5,	// Bit-5
+		None									= 0x00, // no bits set
+		SendPollReplyOnChange	= 1u << 1, // Bit-1
+		ReceiveDiagnostics		= 1u << 2, // Bit-2
+		UnicastDiagnostics		= 1u << 3, // Bit-3
+		DisableVLC						= 1u << 4, // Bit-4
+		EnableTargetedMode		= 1u << 5, // Bit-5
 		// Bits 6 & 7 are reserved and must remain zero
 	};
 
-	u8 DiagPriority;								// 6
-	u8 TargetPortAddressTopHi;			// 7
-	u8 TargetPortAddressTopHi;			// 8
-	u8 TargetPortAddressTopHi;			// 9
-	u8 TargetPortAddressBottomLo;		// 10
-	u8 EstaManHi;										// 11
-	u8 EstaManLo;										// 12
-	u8 OemHi;												// 13
-	u8 OemLo;												// 14
+	enum class DiagPriority : u8 { //The lowest priority of diagnostics message that should be sent.
+		Low				= 0x10,	// Low priority message.
+		Med				= 0x40, // Medium priority message.
+		High			= 0x80, // High priority message.
+		Critical	= 0xe0, // Critical priority message.
+		Volatile	= 0xf0, // Volatile message. Messages of this type are displayed on a single line in the DMX-Workshop diagnostics display. All other types are displayed in a list box.
+	};
+	u8 TargetPortAddressTopHi; // 7
+	u8 TargetPortAddressTopHi; // 8
+	u8 TargetPortAddressTopHi; // 9
+	u8 TargetPortAddressBottomLo; // 10
+	u8 EstaManHi; // 11
+	u8 EstaManLo; // 12
+	u16 OemCode; // The OEM code defines uniquely defines a product and must be registered. The Oem code is used by ArtPoll and ArtPollReply.
 }
