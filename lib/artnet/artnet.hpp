@@ -8,9 +8,13 @@
 
 #include "../werelib.hpp"
 
+// Werelib Artnet implementation is independent of and not associated with Art-Net™.
+// Cedit to the Protocol Standard: "Art-Net™ Designed by and Copyright Artistic Licence". View official Art-Net™ specs via https://art-net.org.uk/downloads/art-net.pdf
 namespace were::artnet {
 
-	consteval u8 id[8] = {'A','r','t','-','N','e','t',0x00}; //Art-Net [0-8]
+	consteval u8 FXD_SIGNATURE[8] = {'A','r','t','-','N','e','t',0x00}; //Art-Net [0-8] Fixed first 8 bytes of an art-net packet
+	consteval u16 FXD_VERSION = 0x000E; // Fixed version number 1.4 or "14" [u8:ProtVerHi & u8:ProtVerLo]
+	consteval u16 STD_PORT = 0x1936; // AKA :6454
 
 	// Art-Net operation codes
 	enum class Op : u16 {
@@ -53,15 +57,6 @@ namespace were::artnet {
 		DirectoryReply		= 0x9b00, // Replies to OpDirectory with file list.
 	};
 
-	u16 ProtocolVersion = 0x000E; // 1.4 or "14"
-	u8 Sequence;
-	u8 Physical;
-	u8 SubUni;
-	u8 Net; // The top 7 bits of the 15 bit Port-Address to which this packet is destined.
-	u16 Length; // The length of the DMX512 data array. This value should be an even number in the range 2 – 512.
-	byte Data[512]; // A variable length array of DMX512 lighting data.
-
-	
 	// ---------------------------------------------
 	// Other ArtNet related messages
 	// ---------------------------------------------
@@ -82,11 +77,18 @@ namespace were::artnet {
 		Critical	= 0xe0, // Critical priority message.
 		Volatile	= 0xf0, // Volatile message. Messages of this type are displayed on a single line in the DMX-Workshop diagnostics display. All other types are displayed in a list box.
 	};
-	u8 TargetPortAddressTopHi; // 7
-	u8 TargetPortAddressTopHi; // 8
-	u8 TargetPortAddressTopHi; // 9
-	u8 TargetPortAddressBottomLo; // 10
-	u8 EstaManHi; // 11
-	u8 EstaManLo; // 12
-	u16 OemCode; // The OEM code defines uniquely defines a product and must be registered. The Oem code is used by ArtPoll and ArtPollReply.
+
+	// ---------------------------------------------
+	// Data Structures
+	// ---------------------------------------------
+	struct ArtDMX {
+		u8 signature[8]; // [0-7] Always "Art-Net,0x00"
+		Op operation; // [8-9] The OpCode defines the class of data within this UDP packet.
+		u16 version; // [10-11] Always "0x000E" or "14"
+		u8 sequenceID; // [12] Packet Sequence order tracking [0x01 -> 0xFF || 0x00 "disabled"]
+		u8 physical; // [13] Physical input port for DMX512 input.
+		u16 universeID; // [14-15] [u8 - SubUni] [u8 - Net] // Big Endian Description [0x0000] where {Net(0b0111 1111), SubNet(0b1111), Universe(0b1111)}
+		u16 dmxLength; // [16-17] The length of the DMX512 data array. This value should be an even number in the range 2 – 512.
+		u8 dmxData[512]; // [18-530] A variable length array of DMX512 lighting data.
+	};
 }
