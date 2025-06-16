@@ -81,14 +81,16 @@ namespace were::artnet {
 	// ---------------------------------------------
 	// Data Structures
 	// ---------------------------------------------
+	#pragma pack(push, 1)
 	struct ArtDMX {
-		u8 signature[8]; // [0-7] Always "Art-Net,0x00"
-		Op operation;    // [8-9] The OpCode defines the class of data within this UDP packet.
-		u16 version;     // [10-11] Always "0x000E" or "14"
-		u8 sequenceID;   // [12] Packet Sequence order tracking [0x01 -> 0xFF || 0x00 "disabled"]
-		u8 physical;     // [13] Physical input port for DMX512 input.
-		u16 universeID;  // [14-15] [u8 - SubUni] [u8 - Net] // Big Endian Description [0x0000] where {Net(0b0111 1111), SubNet(0b1111), Universe(0b1111)}
-		u16 dmxLength;   // [16-17] The length of the DMX512 data array. This value should be an even number in the range 2 – 512.
-		u8 dmxData[512]; // [18-530] A variable length array of DMX512 lighting data.
+		std::array<u8, 8> signature; // [0-7] Always "Art-Net,0x00"
+		Op operation;                // [8-9] The OpCode defines the class of data within this UDP packet.
+		u16 version;                 // [10-11] Always "0x000E" or "14"
+		u8 sequenceID;               // [12] Packet Sequence order tracking [0x01 -> 0xFF || 0x00 "disabled"]
+		u8 physical;                 // [13] Physical input port for DMX512 input.
+		u16 universeID;              // [14-15] [u8 - SubUni] [u8 - Net] // Big Endian Description [0x0000] where {Net(0b0111 1111), SubNet(0b1111), Universe(0b1111)}
+		u16 dmxLength;               // [16-17] The length of the DMX512 data array. This value should be an even number in the range 2 – 512.
+		std::array<u8, 512> dmxData; // [18-530] A variable length array of DMX512 lighting data.
 	};
+	#pragma pack(pop)
 }
