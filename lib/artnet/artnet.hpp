@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include <iostream>
+#include <span>
 
 #include "../werelib.hpp"
 
@@ -8,7 +10,7 @@
 // Cedit to the Protocol Standard: "Art-Net™ Designed by and Copyright Artistic Licence". View official Art-Net™ specs via https://art-net.org.uk/downloads/art-net.pdf
 namespace were::artnet {
 
-	consteval u8 FXD_SIGNATURE[8] = {'A','r','t','-','N','e','t',0x00}; //Art-Net [0-8] Fixed first 8 bytes of an art-net packet
+	consteval std::array<u8, 8> FXD_SIGNATURE = {'A','r','t','-','N','e','t',0x00}; //Art-Net [0-8] Fixed first 8 bytes of an art-net packet
 	consteval u16 FXD_VERSION = 0x000E; // Fixed version number 1.4 or "14" [u8:ProtVerHi & u8:ProtVerLo]
 	consteval u16 STD_PORT = 0x1936; // AKA :6454
 
@@ -89,4 +91,49 @@ namespace were::artnet {
 		std::array<u8, 512> dmxData; // [18-530] A variable length array of DMX512 lighting data.
 	};
 	#pragma pack(pop)
+
+	constexpr std::size_t MIN_PACKET_SIZE = 18;
+	constexpr std::size_t MAX_PACKET_SIZE = sizeof(ArtDMX);
+
+	// ---------------------------------------------
+	// Classes
+	// ---------------------------------------------
+	class DMX_Artnet {
+		
+		private:
+		ArtDMX packet;
+		
+		public:
+		bool validSignature() {
+			return packet.signature == FXD_SIGNATURE;
+		}
+
+		bool procPacket(std::span<const u8> buffer) {
+			if (buffer.size() < MIN_PACKET_SIZE || buffer.size() > MAX_PACKET_SIZE) {
+				std::cerr << "[ArtNet] Packet size invalid: " << buffer.size() << "\n";
+				return false;
+			}
+
+			ArtDMX temp{};
+			std::memcpy(&temp, buffer.data(), std::min(buffer.size(), sizeof(ArtDMX)));
+
+			if (temp.signature != FXD_SIGNATURE) {
+				std::cerr << "[ArtNet] Invalid signature in packet\n";
+				return false;
+			}
+
+			if (temp.operation != Op::Dmx) {
+				std::cerr << "[ArtNet] Unsupported OpCode: " << std::hex << static_cast<u16>(temp.operation) << "\n";
+				return false;
+			}
+
+			if (temp.dmxLength > 512 || (temp.dmxLength % 2) != 0) {
+				std::cerr << "[ArtNet] Invalid DMX length: " << temp.dmxLength << "\n";
+				return false;
+			}
+
+			packet = temp;
+			return true;
+		}
+	};
 }
