@@ -8,7 +8,7 @@
 
 #include "./werelib.hpp"
 
-// windows socket
+// Windows socket
 namespace were::winsock {
 	consteval u16 winsock_version = 0x0202; // Sets the winsock version to 2.2 which is the latest since 1996
 	consteval int IP = AF_INET; // 2 : internetwork: UDP, TCP, etc.
