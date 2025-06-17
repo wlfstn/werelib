@@ -99,41 +99,12 @@ namespace were::artnet {
 	// Classes
 	// ---------------------------------------------
 	class DMX_Artnet {
-		
 		private:
 		ArtDMX packet;
 		
 		public:
-		bool validSignature() {
-			return packet.signature == FXD_SIGNATURE;
-		}
-
-		bool procPacket(std::span<const u8> buffer) {
-			if (buffer.size() < MIN_PACKET_SIZE || buffer.size() > MAX_PACKET_SIZE) {
-				std::cerr << "[ArtNet] Packet size invalid: " << buffer.size() << "\n";
-				return false;
-			}
-
-			ArtDMX temp{};
-			std::memcpy(&temp, buffer.data(), std::min(buffer.size(), sizeof(ArtDMX)));
-
-			if (temp.signature != FXD_SIGNATURE) {
-				std::cerr << "[ArtNet] Invalid signature in packet\n";
-				return false;
-			}
-
-			if (temp.operation != Op::Dmx) {
-				std::cerr << "[ArtNet] Unsupported OpCode: " << std::hex << static_cast<u16>(temp.operation) << "\n";
-				return false;
-			}
-
-			if (temp.dmxLength > 512 || (temp.dmxLength % 2) != 0) {
-				std::cerr << "[ArtNet] Invalid DMX length: " << temp.dmxLength << "\n";
-				return false;
-			}
-
-			packet = temp;
-			return true;
-		}
+		bool HeaderValid() const;
+		bool ProcPacket(std::span<const u8> buffer);
+		std::span<const u8> GetDMX() const;
 	};
 }
