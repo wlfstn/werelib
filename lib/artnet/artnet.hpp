@@ -10,9 +10,9 @@
 // Cedit to the Protocol Standard: "Art-Net™ Designed by and Copyright Artistic Licence". View official Art-Net™ specs via https://art-net.org.uk/downloads/art-net.pdf
 namespace were::artnet {
 
-	consteval std::array<u8, 8> FXD_SIGNATURE = {'A','r','t','-','N','e','t',0x00}; //Art-Net [0-8] Fixed first 8 bytes of an art-net packet
-	consteval u16 FXD_VERSION = 0x000E; // Fixed version number 1.4 or "14" [u8:ProtVerHi & u8:ProtVerLo]
-	consteval u16 STD_PORT = 0x1936; // AKA :6454
+	constexpr std::array<u8, 8> FXD_SIGNATURE = {'A','r','t','-','N','e','t',0x00}; //Art-Net [0-8] Fixed first 8 bytes of an art-net packet
+	constexpr u16 FXD_VERSION = 0x000E; // Fixed version number 1.4 or "14" [u8:ProtVerHi & u8:ProtVerLo]
+	constexpr u16 STD_PORT = 0x1936; // AKA :6454
 
 	// Art-Net operation codes
 	enum class Op : u16 {

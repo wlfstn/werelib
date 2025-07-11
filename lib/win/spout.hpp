@@ -43,14 +43,13 @@ namespace were::spout {
 	class SpoutOBJ {
 	public:
 		// -- CONSTRUCTOR / DESTRUCTOR --
-		SpoutOBJ(std::wstring name);
-		~SpoutOBJ();
+		SpoutOBJ(std::wstring_view name);
 	private:
 		// -- INTERNAL FUNCTIONS -- 
 		void CreateSpoutMemory();
 		void CreateSpoutSender();
-		void SpoutOBJ::Mutex();
-		void SpoutOBJ::RegisterSender();
+		void Mutex();
+		void RegisterSender();
 
 		// -- DATA MEMBERS -- 
 		HANDLE hSpoutMap_ = nullptr;

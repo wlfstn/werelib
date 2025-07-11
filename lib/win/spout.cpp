@@ -2,7 +2,7 @@
 
 namespace were::spout {
 
-	SpoutOBJ::SpoutOBJ(std::wstring name) {
+	SpoutOBJ::SpoutOBJ(std::wstring_view name) {
 		CreateSpoutMemory();
 		senderName_ = name;
 		CreateSpoutSender();
