@@ -34,7 +34,7 @@ namespace were::artnet {
 		return true;
 	}
 
-	std::span<const u8> DMX_Artnet::GetDMX() const {
+	std::span<const u8> DMX_Artnet::DMX_view() const {
 		return std::span<const u8>(packet.dmxData.data(), packet.dmxLength);
 	}
 

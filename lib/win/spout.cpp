@@ -40,6 +40,7 @@ namespace were::spout {
 
 		std::span<byte> senderList(as<byte*>(pSenderList_), FXD_SPOUT_MEM);
 		auto slot_view = senderList | std::views::chunk(FXD_SENDER_SLOT);
+		
 		std::string SenderNameNarrow(senderName_.begin(), senderName_.end());
 		for (auto [index, slot] : slot_view | std::views::enumerate) {
 			if (slot[0] == 0x00) {

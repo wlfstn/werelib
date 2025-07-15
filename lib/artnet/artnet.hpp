@@ -99,12 +99,14 @@ namespace were::artnet {
 	// Classes
 	// ---------------------------------------------
 	class DMX_Artnet {
-		private:
-		ArtDMX packet;
-		
 		public:
 		bool HeaderValid() const;
 		bool ProcPacket(std::span<const u8> buffer);
-		std::span<const u8> GetDMX() const;
+		std::span<const u8> DMX_view() const;
+		
+		private:
+		// -- DATA MEMBERS -- 
+		ArtDMX packet;
+		
 	};
 }
