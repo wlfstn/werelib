@@ -29,7 +29,7 @@ namespace were::win {
 		winsock& operator=(const winsock&) = delete; //prevents assigning
 		~winsock();
 
-		private:
+	private:
 		void openSocket(int type, u16 port);
 		void closeSocket();
 		WSADATA wsaData_{};
