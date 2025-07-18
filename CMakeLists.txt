@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(werelib STATIC
 	lib/artnet/artnet.cpp
 	lib/win/spout.cpp
+	lib/win/winsock.cpp
 )
 
 target_include_directories(werelib PUBLIC
