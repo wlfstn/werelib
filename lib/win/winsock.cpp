@@ -1,11 +1,11 @@
 #include "./winsock.hpp"
 
 namespace were::win {
-	winsock::winsock(int type, u16 port) {
+	winsock::winsock(sock_type st, u16 port) {
 		if (WSAStartup(0x0202, &wsaData_) != 0) {
 			throw std::runtime_error("Winsock 2.2 initialization failed.");
 		}
-		openSocket(type, port);
+		openSocket(as<int>(st), port);
 	}
 
 	winsock::~winsock() {
@@ -13,7 +13,7 @@ namespace were::win {
 		WSACleanup();
 	}
 
-	void openSocket(int type, u16 port) {
+	void winsock::openSocket(int type, u16 port) {
 		// Setup a socket that is internetwork: UDP, TCP, etc & datagram socket
 		SOCKET sock = socket(IP, type, 0);
 		if (sock == INVALID_SOCKET) {
@@ -27,7 +27,7 @@ namespace were::win {
 		localAddr.sin_addr.s_addr = INADDR_ANY;
 
 		// Bind socket to port
-		if (bind(sock, asraw<sockaddr*>(&localAddr), sizeof(localAddr)) == SOCKET_ERROR) {
+		if (bind(sock, raw<sockaddr*>(&localAddr), sizeof(localAddr)) == SOCKET_ERROR) {
 			int err = WSAGetLastError();
 			closesocket(sock);
 			throw std::runtime_error(std::format("Error binding socket. Code: {}", err));
@@ -39,6 +39,10 @@ namespace were::win {
 			closesocket(sock_);
 			sock_ = INVALID_SOCKET;
 		}
+	}
+
+	int winsock::Listen(u8* buf, int len) {
+		return recvfrom(sock_, raw<char*>(buf), len, 0, (sockaddr*)&sender_, &senderLen_);
 	}
 
 }

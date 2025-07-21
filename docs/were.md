@@ -11,6 +11,6 @@
 | Header Library  			| Description                                 | 
 |-----------------------|---------------------------------------------|
 | `were::as`      			| Type Casing : Type Safe                     |
-| `were::asraw`   			| Type punning : Type Safe & defined behavior |
+| `were::raw`   			  | Type punning : Type Safe & defined behavior |
 | `were::asBytes` 			| Union of Type & modern C++ array of bytes   |
 | `were::bigEndianSwap` | Conditional: Convert LE to BE if LE system  |

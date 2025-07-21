@@ -1,6 +1,11 @@
 #pragma once
 
+#ifdef _WINSOCKAPI_
+#error "winsock.h was included before winsock2.h | #define WIN32_LEAN_AND_MEAN before you include <windows.h>"
+#endif
+
 #include <winsock2.h> // WSAStartup
+
 #include <stdexcept> // std::runtime_error
 #include <iostream> // std::cerr
 #include <format> // std::format
@@ -24,15 +29,20 @@ namespace were::win {
 
 	class winsock {
 	public:
-		winsock(int type, u16 port);
+		winsock(sock_type st, u16 port);
 		winsock(const winsock& other) = delete; //prevents copying
 		winsock& operator=(const winsock&) = delete; //prevents assigning
 		~winsock();
 
+		int Listen(u8* buf, int len);
+
 	private:
-		void openSocket(int type, u16 port);
-		void closeSocket();
+		void openSocket(int st, u16 port);
+		void closeSocket() noexcept;
 		WSADATA wsaData_{};
 		SOCKET sock_ = INVALID_SOCKET;
+
+		sockaddr_in sender_;
+		int senderLen_ = sizeof(sender_);
 	};
 }

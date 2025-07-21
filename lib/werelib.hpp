@@ -4,6 +4,8 @@
 #include <array>
 #include <cstddef>
 #include <type_traits>
+#include <chrono>
+#include <iostream>
 
 namespace were {
 	
@@ -37,10 +39,10 @@ namespace were {
 		return static_cast<ToType>(value);
 	}
 	
-	// [EXAMPLE]			-- were::asraw<T>(V)
+	// [EXAMPLE]			-- were::raw<T>(V)
 	// [DESCRIPTION]	-- reinterpret_cast alias at compile time
 	template <typename ToType, typename From>
-	[[nodiscard]] constexpr ToType asraw(From&& value) noexcept {
+	[[nodiscard]] constexpr ToType raw(From&& value) noexcept {
 		return reinterpret_cast<ToType>(value);
 	}
 	
@@ -64,4 +66,11 @@ namespace were {
 		? std::byteswap(value)
 		: value;
 	}
+
+	struct Timer {
+		std::chrono::time_point<std::chrono::steady_clock> start, end;
+		std::chrono::duration<f32> duration;
+		Timer();
+		~Timer();
+	};
 }

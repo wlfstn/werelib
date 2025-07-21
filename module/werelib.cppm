@@ -33,7 +33,7 @@ export namespace were {
 	// were::asraw<T>(V)
 	// reinterpret_cast without undefined behavior alias at compile time
 	template <typename ToType, typename From>
-	[[nodiscard]] constexpr ToType asraw(From&& value) noexcept {
+	[[nodiscard]] constexpr ToType raw(From&& value) noexcept {
 		return std::bit_cast<ToType>(value);
 	}
 

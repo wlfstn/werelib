@@ -106,7 +106,7 @@ namespace were::artnet {
 		
 		private:
 		// -- DATA MEMBERS -- 
-		ArtDMX packet;
+		ArtDMX packet{};
 		
 	};
 }
