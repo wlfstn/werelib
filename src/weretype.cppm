@@ -1,7 +1,8 @@
 module;
 
 #include <ranges>
-#include <algorithm>
+#include <span>
+#include <utility>
 
 export module weretype;
 
