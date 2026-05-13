@@ -8,12 +8,15 @@ Non-Standard utility library for Modern C++ development.
 - were.hex.cppm -- Hexadecimal encoding / decoding.
 - were.base64.cppm -- Base64 encoding / decoding.
 
-# Adding to projects
-Using werelib in your projects!
+# Using werelib in your projects!
 ## Cmake
+(Optional if you wish to make it shared)
 ```cmake
 set(WERELIB_SHARED ON CACHE BOOL "" FORCE)
-add_subdirectory(werelib)
+```
+The location of the directory is anywhere you choose to place it.
+```cmake
+add_subdirectory(src/vendor/werelib)
 ```
 
 ## Git
