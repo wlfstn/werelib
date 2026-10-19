@@ -6,57 +6,58 @@ module;
 #include <vector>
 #include <span>
 #include <ranges>
-#include <cassert>
+#include <array>
+#include <algorithm>
+#include <utility>
 
 export module were.base64;
 import weretype;
 
 export namespace were::base64 {
-	enum struct Error { badLength, badChar, badPadding };
 
-	[[nodiscard]] auto asSextet(char ch)
-	-> std::expected<u8, Error> {
-		if (ch >= 'A' && ch <= 'Z') return as<u8>(ch - 'A');
-		if (ch >= 'a' && ch <= 'z') return as<u8>(ch - 'a' + 26);
-		if (ch >= '0' && ch <= '9') return as<u8>(ch - '0' + 52);
-		if (ch == '+') return 62;
-		if (ch == '/') return 63;
+	// [Constants]
+	constexpr std::string_view Legend{
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"abcdefghijklmnopqrstuvwxyz"
+		"0123456789+/"
+	};
+	enum struct Error { BadLength, BadChar, BadPadding };
 
-		return std::unexpected(Error::badChar);
+	[[nodiscard]] constexpr auto numeric(char ch) -> std::expected<u8, Error> {
+		const auto pos = Legend.find(ch);
+		if (pos == std::string_view::npos) return std::unexpected(Error::BadChar);
+
+		return as<u8>(pos);
 	}
 
-	[[nodiscard]] auto decode(std::string_view input)
-	-> std::expected<std::vector<u8>, Error> {
-		if (input.size() % 4 != 0) return std::unexpected(Error::badLength);
-		if (input.empty()) return std::vector<u8>{};
+	[[nodiscard]] constexpr auto decode(std::string_view input) -> std::expected<std::vector<u8>, Error> {
+		if (input.size() % 4 || input.empty()) return std::unexpected(Error::BadLength);
 
-		size_t padding{};
+		const auto padding = std::ranges::distance(
+			input
+			| std::views::reverse
+			| std::views::take_while([](char ch) { return ch == '='; })
+		);
+		if (padding > 2) return std::unexpected(Error::BadPadding);
 
-		if (input[input.size() - 1] == '=') ++padding;
-		if (input[input.size() - 2] == '=') ++padding;
-
-		if (padding > 2) return std::unexpected(Error::badPadding);
-
-		// for (size_t i{}; i + padding < input.size(); ++i) {
-		for (auto i : std::views::iota(0uz, input.size() - padding)) {
-			if (input[i] == '=') return std::unexpected(Error::badPadding);
+		for (auto i : were::thru(input.size() - padding)) {
+			if (input[i] == '=') return std::unexpected(Error::BadPadding);
 		}
 
 		std::vector<u8> out;
-		out.resize((input.size() / 4) * 3 - padding);
+		out.reserve((input.size() / 4) * 3 - padding);
 
-		size_t outIndex{};
-		for (size_t i = 0; i < input.size(); i += 4) {
-			u8 sextets[4]{};
+		for (auto group : input | std::views::chunk(4)) {
+			std::array<u8, 4> sextets{};
 
-			for (auto x : std::views::iota(0uz, 4uz)) {
-				const char ch = input[i + x];
+			for (auto x : were::thru(4)) {
+				const char ch = group[x];
 				if (ch == '=') {
 					sextets[x] = 0;
 					continue;
 				}
 
-				auto r = asSextet(ch);
+				auto r = numeric(ch);
 				if (!r) return std::unexpected(r.error());
 
 				sextets[x] = *r;
@@ -66,64 +67,97 @@ export namespace were::base64 {
 			const u8 b1 = as<u8>(((sextets[1] & 0x0F) << 4) | (sextets[2] >> 2));
 			const u8 b2 = as<u8>(((sextets[2] & 0x03) << 6) | sextets[3]);
 
-			if (outIndex < out.size()) out[outIndex++] = b0;
-			if (outIndex < out.size()) out[outIndex++] = b1;
-			if (outIndex < out.size()) out[outIndex++] = b2;
+			out.push_back(b0);
+			if (group[2] != '=') out.push_back(b1);
+			if (group[3] != '=') out.push_back(b2);
 		}
 
 		return out;
 	}
 
-	[[nodiscard]] auto encode(
-		std::span<const u8> input
-	) -> std::string {
-		static constexpr char Encode_LUT[] =
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-			"abcdefghijklmnopqrstuvwxyz"
-			"0123456789+/";
+	[[nodiscard]] constexpr auto encode(std::span<const u8> input) -> std::string {
+		if (input.empty()) return {};
 
-		if (input.empty()) {
-			return {};
-		}
-
-		const size_t fullGroups = input.size() / 3;
-		const size_t remainder = input.size() % 3;
+		const auto [fullGroups, remainder] = std::pair{ input.size() / 3, input.size() % 3 };
 
 		std::string out;
 		out.resize(((input.size() + 2) / 3) * 4);
 
-		size_t inIndex{};
-		size_t outIndex{};
+		for (const auto [indx, group] :
+			were::thru(
+				input
+				| std::views::take(fullGroups * 3)
+				| std::views::chunk(3)
+			)) {
+			const u32 value =
+				(as<u32>(group[0]) << 16) |
+				(as<u32>(group[1]) <<  8) |
+				as<u32>(group[2]);
 
-		for (size_t i = 0; i < fullGroups; ++i) {
-			const u8 b0 = input[inIndex++];
-			const u8 b1 = input[inIndex++];
-			const u8 b2 = input[inIndex++];
-
-			out[outIndex++] = Encode_LUT[b0 >> 2];
-			out[outIndex++] = Encode_LUT[((b0 & 0x03) << 4) | (b1 >> 4)];
-			out[outIndex++] = Encode_LUT[((b1 & 0x0F) << 2) | (b2 >> 6)];
-			out[outIndex++] = Encode_LUT[b2 & 0x3F];
+			for (const auto i : were::thru(4)) {
+				out[indx * 4 + i] = Legend[(value >> (18 - i * 6)) & 0b0011'1111];
+			}
 		}
 
-		if (remainder == 1) {
-			const u8 b0 = input[inIndex];
+		const auto inBase  = fullGroups * 3;
+		const auto outBase = fullGroups * 4;
 
-			out[outIndex++] = Encode_LUT[b0 >> 2];
-			out[outIndex++] = Encode_LUT[(b0 & 0x03) << 4];
-			out[outIndex++] = '=';
-			out[outIndex++] = '=';
-		} else if (remainder == 2) {
-			const u8 b0 = input[inIndex++];
-			const u8 b1 = input[inIndex];
+		if (remainder) {
+			u32 value{};
 
-			out[outIndex++] = Encode_LUT[b0 >> 2];
-			out[outIndex++] = Encode_LUT[((b0 & 0x03) << 4) | (b1 >> 4)];
-			out[outIndex++] = Encode_LUT[(b1 & 0x0F) << 2];
-			out[outIndex++] = '=';
+			for (const auto [i, byte] : were::thru(input | std::views::drop(inBase))) {
+				value |= as<u32>(byte) << (16 - i * 8);
+			}
+
+			out[outBase + 0] = Legend[value >> 18];
+			out[outBase + 1] = Legend[(value >> 12) & 0x3F];
+			out[outBase + 2] = Legend[(value >>  6) & 0x3F];
+			out[outBase + 3] = Legend[value & 0x3F];
+
+			for (const auto i : were::thru(3 - remainder))
+				out[out.size() - 1 - i] = '=';
 		}
 
-		assert(outIndex == out.size());
 		return out;
 	}
+}
+
+// [Static Assert Testing]
+namespace were::base64::testing {
+	static_assert(Legend.size() == 64, "Base64 legend must contain exactly 64 characters");
+
+	constexpr std::array<u8, 3> EncodeInput{'f', 'o', 'o'};
+	constexpr std::span<const u8> EncodeBytes{EncodeInput};
+	static_assert(encode(EncodeBytes) == "Zm9v");
+	static_assert(encode(EncodeBytes.first(2)) == "Zm8=");
+	static_assert(encode(EncodeBytes.first(1)) == "Zg==");
+	static_assert(encode(EncodeBytes.first(0)).empty());
+
+	static_assert([] {
+		constexpr std::array<u8, 3> input{0x00, 0xFB, 0xFF};
+		auto result = decode("APv/");
+		return encode(input) == "APv/"
+			&& result && *result == std::vector<u8>{0x00, 0xFB, 0xFF};
+	}(), "Base64 binary data test failed");
+
+	static_assert([] {
+		for (auto input : {"", "Zg", "Zg==="}) {
+			auto result = decode(input);
+			if (result || result.error() != Error::BadLength) return false;
+		}
+		return true;
+	}(), "Base64 invalid length test failed");
+
+	static_assert([] {
+		auto result = decode("Zm9!");
+		return !result && result.error() == Error::BadChar;
+	}(), "Base64 invalid character test failed");
+
+	static_assert([] {
+		for (auto input : {"Z===", "====", "Z=g=", "Zg==Zm9v"}) {
+			auto result = decode(input);
+			if (result || result.error() != Error::BadPadding) return false;
+		}
+		return true;
+	}(), "Base64 invalid padding test failed");
 }

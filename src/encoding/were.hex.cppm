@@ -5,49 +5,98 @@ module;
 #include <expected>
 #include <vector>
 #include <span>
-#include <cassert>
+#include <ranges>
+#include <array>
+#include <algorithm>
 
 export module were.hex;
 import weretype;
 
 export namespace were::hex {
-	enum struct Error { invalidLength, invalidChar};
 
-	[[nodiscard]] auto asNybble(char ch) 
-	-> std::expected<u8, Error> {
-		if (ch >= '0' && ch <= '9') return as<u8>(ch - '0');
-		if (ch >= 'a' && ch <= 'f') return as<u8>(ch - 'a' + 10);
-		if (ch >= 'A' && ch <= 'F') return as<u8>(ch - 'A' + 10);
-		return std::unexpected(Error::invalidChar);
+	// [Constants]
+	constexpr std::string_view Legend{"0123456789ABCDEF"};
+	enum struct Error { BadLength, BadChar};
+
+	constexpr int CaseOffset = 'a'-'A';
+	constexpr auto NormalizedHex = [](char ch) -> char { return ch >= 'a' && ch <= 'f' ? ch - CaseOffset : ch; };
+
+
+	// [Functions]
+	[[nodiscard]] constexpr auto numeric(char ch) -> std::expected<u8, Error> {
+		const auto pos = Legend.find(NormalizedHex(ch));
+		if (pos == std::string_view::npos) return std::unexpected(Error::BadChar);
+		return as<u8>(pos);
 	}
 
-	[[nodiscard]] auto decode(std::string_view input) 
-	-> std::expected<std::vector<u8>, Error> {
-		if (input.size() % 2 != 0) return std::unexpected(Error::invalidLength);
-		std::vector<u8> out(input.size() / 2);
+	[[nodiscard]] constexpr auto decode(std::string_view input) -> std::expected<std::vector<u8>, Error> {
+		if (input.empty() || input.size() % 2) return std::unexpected(Error::BadLength);
+		std::vector<u8> out;
+		out.reserve(input.size() / 2);
 
-		for (auto [i, byte] : were::thru(out)) {
-			for (auto x : {0,1}) {
-				auto r = asNybble(input[i*2+x]);
-				if (!r) return std::unexpected(r.error());
-				out[i] |= (*r << (4-(x*4)));
-			}	
+		for (auto pair : input | std::views::chunk(2)) {
+			auto high = numeric(pair[0]);
+			auto low  = numeric(pair[1]);
+			if (!high || !low) return std::unexpected(Error::BadChar);
+
+			out.push_back(as<u8>((*high << 4) | *low));
 		}
 		return out;
 	}
 
-	[[nodiscard]] auto encode(std::span<const u8> input) 
-	-> std::string {
-		static constexpr char Encode_LUT[] = "0123456789ABCDEF";
-		std::string out(input.size() * 2, '\0');
+	[[nodiscard]] constexpr auto encode(std::span<const u8> input) -> std::string {
+		std::string output(input.size() * 2, '\0');
 
-		for (auto [i, elem] : were::thru(input)) {
-			size_t indx = i*2;
-			assert(indx + 1 < out.size());
-			out[indx] = Encode_LUT[elem >> 4];
-			out[indx + 1] = Encode_LUT[elem & 0x0F];
+		for (auto [i, value] : were::thru(input)) {
+			output[i * 2]     = Legend[value >> 4];
+			output[i * 2 + 1] = Legend[value & 0x0F];
 		}
 
-		return out;
+		return output;
 	}
+}
+
+// [Static Assert Testing]
+namespace were::hex::testing {
+	static_assert(Legend.size() == 16, "Hex legend must contain exactly 16 characters");
+
+	static_assert([] {
+		constexpr std::array<u8, 3> input{0x12, 0xAB, 0xFF};
+		return encode(input) == "12ABFF";
+	}(), "Hex encode test failed");
+
+	static_assert([] {
+		auto result = decode("12ABFF");
+		if (!result) return false;
+		return *result == std::vector<u8>{0x12, 0xAB, 0xFF};
+	}(), "Hex decode test failed");
+
+	static_assert([] {
+		auto result = decode("GG");
+		return !result && result.error() == Error::BadChar;
+	}(), "Invalid decode input test failed");
+
+	static_assert([] {
+		auto empty = decode("");
+		return !empty && empty.error() == Error::BadLength;
+	}(), "Hex empty decode input must be rejected");
+
+	static_assert(encode(std::span<const u8>{}).empty(), "Hex empty encode input test failed");
+
+	static_assert([] {
+		auto odd = decode("ABC");
+		return !odd && odd.error() == Error::BadLength;
+	}(), "Hex odd-length input test failed");
+
+	static_assert([] {
+		auto mixed = decode("aBcD");
+		return mixed && *mixed == std::vector<u8>{0xAB, 0xCD};
+	}(), "Hex mixed-case input test failed");
+
+	static_assert([] {
+		std::array<u8, 256> bytes{};
+		for (auto [i, value] : were::thru(bytes)) value = as<u8>(i);
+		auto result = decode(encode(bytes));
+		return result && std::ranges::equal(*result, bytes);
+	}(), "Hex round trip must preserve every byte value");
 }
