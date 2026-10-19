@@ -1,15 +1,17 @@
 # Werelib
-Non-Standard utility library for Modern C++ development.
+Utility library and slight STL alternative for Modern C++ development.  
+See the [API reference](docs/reference.md) for types, functions, and error behavior.
 
-## Core
+### Core
 - weretype.cppm -- core types, casts, and template conversions.
 
-## Encoding
+### Encoding
 - were.hex.cppm -- Hexadecimal encoding / decoding.
 - were.base64.cppm -- Base64 encoding / decoding.
 
+
 # Using werelib in your projects!
-## Cmake
+### Cmake
 (Optional if you wish to make it shared)
 ```cmake
 set(WERELIB_SHARED ON CACHE BOOL "" FORCE)
@@ -26,6 +28,6 @@ target_link_libraries(
 )
 ```
 
-## Git
+### Git
 - Add `git submodule add https://github.com/wlfstn/werelib ./stc/vendor/werelib`
 - Update `git submodule update --remote --merge`
