@@ -8,6 +8,7 @@ See the [API reference](docs/reference.md) for types, functions, and error behav
 ### Encoding
 - were.hex.cppm -- Hexadecimal encoding / decoding.
 - were.base64.cppm -- Base64 encoding / decoding.
+- were.base32.cppm -- Strict RFC4648 Base32 encoding / decoding.
 
 
 # Using werelib in your projects!

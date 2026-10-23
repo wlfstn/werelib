@@ -13,7 +13,7 @@ export module weretype;
 export {
 
 	// [DATA ALIASES]
-	using byte = std::uint8_t;
+	using byte = std::byte;
 
 	using u8 = std::uint8_t;
 	using u16 = std::uint16_t;
@@ -30,14 +30,16 @@ export {
 
 	// as<T>(V) -- static_cast alias at compile time
 	template <typename ToType, typename From>
-	[[nodiscard]] constexpr ToType as(From&& value)
+	[[nodiscard]] constexpr
+	ToType as(From&& value)
 		noexcept(noexcept(static_cast<ToType>(std::forward<From>(value)))) {
 		return static_cast<ToType>(std::forward<From>(value));
 	}
 
 	// raw<T>(V) -- runtime reinterpret_cast alias
 	template <typename ToType, typename From>
-	[[nodiscard]] constexpr ToType raw(From&& value) {
+	[[nodiscard]] constexpr
+	ToType raw(From&& value) {
 		return reinterpret_cast<ToType>(value);
 	}
 
@@ -46,7 +48,8 @@ export {
 	concept byteRange = std::ranges::contiguous_range<const T> && std::ranges::sized_range<const T>;
 
 	template<byteRange T>
-	[[nodiscard]] auto u8span(const T& input)
+	[[nodiscard]]
+	auto u8span(const T& input)
 		-> std::span<const u8> {
 		using Elem = std::ranges::range_value_t<T>;
 
@@ -65,7 +68,8 @@ export namespace were {
 	using Result = std::expected<T, std::string>;
 
 	// thru(count) -- indices from zero up to, but excluding, count.
-	[[nodiscard]] constexpr auto thru(std::size_t count) noexcept {
+	[[nodiscard]] constexpr
+	auto thru(std::size_t count) noexcept {
 		return std::views::iota(0uz, count);
 	}
 

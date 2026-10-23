@@ -1,43 +1,91 @@
 # Reference
 
-## Core (`import weretype;`)
-Types and cast helpers are in the global namespace. Range helpers and `Result` are in `were`.
+## Core
 
-| Type | Description |
+`import weretype;`
+
+Types and casts are global; range helpers and `Result` are in `were`.
+
+| Type | Meaning |
 | --- | --- |
-| `byte`, `u8`, `u16`, `u32`, `u64` | Unsigned fixed-width integers; `byte` is an alias for `u8`. |
-| `i8`, `i16`, `i32`, `i64` | Signed fixed-width integers. |
-| `f32`, `f64` | Aliases for `float` and `double`. |
-| `were::Result<T = void>` | Alias for `std::expected<T, std::string>`. |
+| `byte` | `std::byte` for raw storage |
+| `u8`, `u16`, `u32`, `u64` | Unsigned fixed-width integers |
+| `i8`, `i16`, `i32`, `i64` | Signed fixed-width integers |
+| `f32`, `f64` | `float`, `double` |
+| `were::Result<T = void>` | `std::expected<T, std::string>` |
 
-| Function / concept | Description |
+| Helper | Behavior |
 | --- | --- |
-| `as<T>(value)` | Applies `static_cast<T>` with perfect forwarding. Supports constant evaluation when the cast does, and is `noexcept` when the cast is. |
-| `raw<T>(value)` | Applies `reinterpret_cast<T>`. Intended for runtime use. |
-| `byteRange<T>` | Requires `const T` to be a contiguous, sized range. |
-| `u8span(input)` | Returns a read-only `std::span<const u8>` over a range's object bytes, with length `input.size() * sizeof(element)`. Does not copy or extend the input's lifetime. |
-| `were::thru(count)` | Returns a view of indices from zero up to, but excluding, `count` (`std::size_t`). |
-| `were::thru(range)` | Returns a view of `(index, element)` pairs, starting at index zero. |
+| `as<T>(value)` | Forwarding `static_cast<T>`; conditionally `noexcept` |
+| `raw<T>(value)` | Runtime `reinterpret_cast<T>` |
+| `byteRange<T>` | Requires `const T` to be a contiguous, sized range |
+| `u8span(input)` | Views object bytes as `std::span<const u8>`; input must outlive the view |
+| `were::thru(count)` | Index view over `[0, count)` |
+| `were::thru(range)` | View of `(index, element)` pairs, starting at zero |
 
-## Hex (`import were.hex;`)
-Functions and constants are in `were::hex`. Encoding, decoding, and character conversion are `constexpr`.
+## Encodings
 
-| Function | Returns | Description |
+| Format | Import | Namespace | Alphabet |
+| --- | --- | --- | --- |
+| Hex | `import were.hex;` | `were::hex` | `0-9`, `A-F` (case-insensitive) |
+| Base64 | `import were.base64;` | `were::base64` | `A-Z`, `a-z`, `0-9`, `+`, `/` |
+| Base32 | `import were.base32;` | `were::base32` | `A-Z`, `2-7` |
+
+All three expose these `constexpr` functions and an alphabet constant, `Legend`:
+
+| Function | Returns | Behavior |
 | --- | --- | --- |
-| `numeric(char ch)` | `std::expected<u8, Error>` | Converts a hexadecimal digit to 0–15. Accepts uppercase and lowercase; returns `BadChar` for other characters. |
-| `decode(std::string_view input)` | `std::expected<std::vector<u8>, Error>` | Converts pairs of hexadecimal digits to bytes. Empty or odd-length input returns `BadLength`; invalid digits return `BadChar`. |
-| `encode(std::span<const u8> input)` | `std::string` | Produces two uppercase hexadecimal digits per byte. Empty input produces an empty string. |
-| `NormalizedHex(char ch)` | `char` | Converts lowercase `a`–`f` to uppercase; leaves other characters unchanged. |
+| `numeric(char)` | `std::expected<u8, Error>` | Alphabet index; otherwise `BadChar` |
+| `decode(std::string_view)` | `std::expected<std::vector<u8>, Error>` | Decoded bytes or an error |
+| `encode(std::span<const u8>)` | `std::string` | Encoded text; empty input produces an empty string |
 
-`Error` contains `BadLength` and `BadChar`. `Legend` holds `0123456789ABCDEF`; `CaseOffset` is the difference between `'a'` and `'A'`.
+All decoders reject empty input and whitespace. Base64 and Base32 add trailing `=` padding as needed; `numeric('=')` returns `BadChar`.
 
-## Base64 (`import were.base64;`)
-Functions and constants are in `were::base64`. Encoding, decoding, and character conversion are `constexpr`.
+### Hex
 
-| Function | Returns | Description |
-| --- | --- | --- |
-| `numeric(char ch)` | `std::expected<u8, Error>` | Converts a character from the Base64 alphabet to 0–63. Returns `BadChar` for other characters, including `=`. |
-| `decode(std::string_view input)` | `std::expected<std::vector<u8>, Error>` | Decodes Base64 with optional trailing `=` padding. Empty input or a length not divisible by four returns `BadLength`; misplaced or excessive padding returns `BadPadding`; invalid alphabet characters return `BadChar`. |
-| `encode(std::span<const u8> input)` | `std::string` | Encodes bytes using the standard Base64 alphabet and adds `=` padding as needed. Empty input produces an empty string. |
+Encodes two uppercase digits per byte.
 
-`Error` contains `BadLength`, `BadChar`, and `BadPadding`. `Legend` holds the standard alphabet: `A–Z`, `a–z`, `0–9`, `+`, `/`. Whitespace and URL-safe `-` / `_` characters are not accepted by the decoder.
+- `BadLength`: empty or odd-length input.
+- `BadChar`: invalid hex digit.
+
+`NormalizedHex(char)` uppercases `a-f`, leaving other characters unchanged. `CaseOffset` equals `'a' - 'A'`.
+
+### Base64
+
+Uses the standard alphabet; URL-safe `-` and `_` are rejected.
+
+- `BadLength`: empty input or length not divisible by four.
+- `BadPadding`: misplaced `=` or more than two padding characters.
+- `BadChar`: invalid alphabet character.
+
+### Base32
+
+Uses standard RFC 4648 Base32; lowercase and alternate alphabets are rejected.
+
+- `BadLength`: empty input or length not divisible by eight.
+- `BadPadding`: misplaced `=`, padding count outside `{0, 1, 3, 4, 6}`, or nonzero unused bits.
+- `BadChar`: invalid alphabet character.
+
+Validation order: length, padding structure, alphabet, unused bits. Partial groups require padding.
+
+```cpp
+#include <array>
+import weretype;
+import were.base32;
+
+constexpr std::array<u8, 3> bytes{'f', 'o', 'o'};
+auto text = were::base32::encode(bytes); // "MZXW6==="
+auto result = were::base32::decode(text);
+if (result) { /* use *result */ }
+```
+
+## Tests
+
+Base32 checks cover RFC 4648 vectors, invalid input, padding bits, and binary round-trips.
+With CMake 4.1+ and a C++23 module-capable compiler:
+
+```sh
+cmake -S . -B build -DWERELIB_BUILD_TESTS=ON
+cmake --build build --config Debug
+ctest --test-dir build -C Debug --output-on-failure
+```

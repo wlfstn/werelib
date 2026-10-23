@@ -23,14 +23,16 @@ export namespace were::base64 {
 	};
 	enum struct Error { BadLength, BadChar, BadPadding };
 
-	[[nodiscard]] constexpr auto numeric(char ch) -> std::expected<u8, Error> {
+	[[nodiscard]] constexpr
+	auto numeric(char ch) -> std::expected<u8, Error> {
 		const auto pos = Legend.find(ch);
 		if (pos == std::string_view::npos) return std::unexpected(Error::BadChar);
 
 		return as<u8>(pos);
 	}
 
-	[[nodiscard]] constexpr auto decode(std::string_view input) -> std::expected<std::vector<u8>, Error> {
+	[[nodiscard]] constexpr
+	auto decode(std::string_view input) -> std::expected<std::vector<u8>, Error> {
 		if (input.size() % 4 || input.empty()) return std::unexpected(Error::BadLength);
 
 		const auto padding = std::ranges::distance(
@@ -75,7 +77,8 @@ export namespace were::base64 {
 		return out;
 	}
 
-	[[nodiscard]] constexpr auto encode(std::span<const u8> input) -> std::string {
+	[[nodiscard]] constexpr
+	auto encode(std::span<const u8> input) -> std::string {
 		if (input.empty()) return {};
 
 		const auto [fullGroups, remainder] = std::pair{ input.size() / 3, input.size() % 3 };
