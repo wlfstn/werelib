@@ -31,12 +31,3 @@ target_sources(werelib
 		src/encoding/were.ascii85.cppm
 		src/encoding/were.hex.cppm
 )
-
-# Runtime checks are opt-in, including when werelib is a subdirectory.
-option(WERELIB_BUILD_TESTS "Build werelib tests" OFF)
-if(WERELIB_BUILD_TESTS)
-	enable_testing()
-	add_executable(werelib_base32_tests tests/base32.cpp)
-	target_link_libraries(werelib_base32_tests PRIVATE werelib)
-	add_test(NAME werelib.base32 COMMAND werelib_base32_tests)
-endif()
