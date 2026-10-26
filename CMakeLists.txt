@@ -28,6 +28,7 @@ target_sources(werelib
 		src/weretype.cppm
 		src/encoding/were.base32.cppm
 		src/encoding/were.base64.cppm
+		src/encoding/were.ascii85.cppm
 		src/encoding/were.hex.cppm
 )
 

@@ -30,8 +30,9 @@ Types and casts are global; range helpers and `Result` are in `were`.
 | Hex | `import were.hex;` | `were::hex` | `0-9`, `A-F` (case-insensitive) |
 | Base64 | `import were.base64;` | `were::base64` | `A-Z`, `a-z`, `0-9`, `+`, `/` |
 | Base32 | `import were.base32;` | `were::base32` | `A-Z`, `2-7` |
+| Ascii85 | `import were.ascii85;` | `were::ascii85` | `!` through `u`; `z` abbreviates four zero bytes |
 
-All three expose these `constexpr` functions and an alphabet constant, `Legend`:
+All encodings expose these `constexpr` functions and an alphabet constant, `Legend`:
 
 | Function | Returns | Behavior |
 | --- | --- | --- |
@@ -39,7 +40,7 @@ All three expose these `constexpr` functions and an alphabet constant, `Legend`:
 | `decode(std::string_view)` | `std::expected<std::vector<u8>, Error>` | Decoded bytes or an error |
 | `encode(std::span<const u8>)` | `std::string` | Encoded text; empty input produces an empty string |
 
-All decoders reject empty input and whitespace. Base64 and Base32 add trailing `=` padding as needed; `numeric('=')` returns `BadChar`.
+All decoders reject empty input and whitespace. Base64 and Base32 add trailing `=` padding as needed; their `numeric('=')` returns `BadChar`.
 
 ### Hex
 
@@ -79,9 +80,18 @@ auto result = were::base32::decode(text);
 if (result) { /* use *result */ }
 ```
 
+### Ascii85
+
+Uses raw Ascii85: four bytes become five characters; partial groups use two to four characters. Full groups of four zero bytes encode as `z`; partial zero groups use ordinary digits. No padding markers or Adobe `<~ ~>` framing. Whitespace and the btoa `y` abbreviation are rejected.
+
+- `BadLength`: empty input or a final group containing only one digit.
+- `BadChar`: invalid alphabet character or `z` inside a digit group.
+- `Overflow`: a group exceeds the 32-bit range.
+
 ## Tests
 
 Base32 checks cover RFC 4648 vectors, invalid input, padding bits, and binary round-trips.
+Ascii85 compile-time checks cover known vectors, invalid input, zero groups, and binary round-trips.
 With CMake 4.1+ and a C++23 module-capable compiler:
 
 ```sh
