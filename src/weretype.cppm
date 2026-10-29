@@ -2,6 +2,8 @@ module;
 
 #include <cstddef>
 #include <cstdint>
+#include <concepts>
+#include <limits>
 #include <string>
 #include <ranges>
 #include <expected>
@@ -14,7 +16,7 @@ export {
 
 	// [DATA ALIASES]
 	using byte = std::byte;
-
+	
 	using u8 = std::uint8_t;
 	using u16 = std::uint16_t;
 	using u32 = std::uint32_t;
@@ -24,9 +26,11 @@ export {
 	using i16 = std::int16_t;
 	using i32 = std::int32_t;
 	using i64 = std::int64_t;
-
+	
 	using f32 = float;
 	using f64 = double;
+	
+	constexpr auto bytewidth = std::numeric_limits<unsigned char>::digits;
 
 	// as<T>(V) -- static_cast alias at compile time
 	template <typename ToType, typename From>
@@ -62,6 +66,24 @@ export {
 
 
 export namespace were {
+
+	template<typename T>
+	struct memsize {
+		static constexpr auto bytes = sizeof(T);
+		static constexpr auto bits =  bytes * bytewidth;
+	};
+
+	template<typename T>
+	concept integer = std::integral<T> && !std::same_as<T, bool>;
+
+	template<integer T>
+	struct numeric {
+		static constexpr T min = std::numeric_limits<T>::min();
+		static constexpr T max = std::numeric_limits<T>::max();
+		static consteval u64 cardinality() requires (memsize<T>::bits < 64) {
+			return std::uint64_t{1} << memsize<T>::bits;
+		}
+	};
 
 	// Alias for std::expected<T,E>
 	template <typename T = void>
