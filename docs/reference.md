@@ -32,7 +32,7 @@ Types and casts are global; range helpers and `Result` are in `were`.
 | Base32 | `import were.base32;` | `were::base32` | `A-Z`, `2-7` |
 | Ascii85 | `import were.ascii85;` | `were::ascii85` | `!` through `u`; `z` abbreviates four zero bytes |
 
-All encodings expose these `constexpr` functions and an alphabet constant, `Legend`:
+Hex, Base64, Base32, and Ascii85 expose these `constexpr` functions and an alphabet constant, `Legend`:
 
 | Function | Returns | Behavior |
 | --- | --- | --- |
@@ -82,20 +82,63 @@ if (result) { /* use *result */ }
 
 ### Ascii85
 
+See the [short ASCII85 history and overview](ascii85.md).
+
 Uses raw Ascii85: four bytes become five characters; partial groups use two to four characters. Full groups of four zero bytes encode as `z`; partial zero groups use ordinary digits. No padding markers or Adobe `<~ ~>` framing. Whitespace and the btoa `y` abbreviation are rejected.
 
 - `BadLength`: empty input or a final group containing only one digit.
 - `BadChar`: invalid alphabet character or `z` inside a digit group.
 - `Overflow`: a group exceeds the 32-bit range.
 
+## Huffman
+
+See the [short Huffman coding overview](huffman.md).
+
+`import were.huffman;` exposes the byte counting and tree construction APIs in `were::huffman`.
+
+`countBytes(std::span<const u8> input)` returns a `std::vector<ByteCount>` with one entry per unique byte, sorted by byte value. Each entry contains `byteval` (the byte) and `count` (its occurrence count). Empty input returns an empty vector. The function is `constexpr`.
+
+`buildTree(std::span<const ByteCount> counts)` and `buildTree(std::span<const u8> input)` return `std::expected<Tree, Error>`. A minimum `std::priority_queue` repeatedly merges the two least frequent nodes. Equal frequencies are ordered by node index; leaves are created in byte order, so input ordering does not affect the tree.
+
+`Tree` owns a `nodes` vector and a `root` index. Each `Node` contains `byteval`, `count`, `left`, and `right`. Child links are indices into the vector; leaves have both links set to `NoNode` and can be identified with `isLeaf()`. Only leaves have a meaningful `byteval`. A single distinct byte produces a single leaf root. A default-constructed tree has no nodes and a `NoNode` root.
+
+Zero counts are ignored. Empty input or all-zero counts return `EmptyTree`; duplicate byte entries return `BadSymbol`; a total count exceeding `std::size_t` returns `CountOverflow`. Tree construction is declared `constexpr`, but constant evaluation requires a standard library with constexpr `std::priority_queue` support. These functions construct the tree only; they do not encode or decode data.
+
+## DEFLATE
+
+`import were.deflate;` (included by default; imports `weretype`, `were.huffman`, and `were.hex`; no external libraries).
+
+| Function | Behavior |
+| --- | --- |
+| `were::deflate::compress(input, level = -1)` | `-1` selects level 6; `0` stores bytes; `1-9` increases match-search effort |
+| `were::deflate::decompress(input, maxOutput = SIZE_MAX)` | Decompresses one complete stream, optionally limiting output bytes |
+
+Both are `constexpr`, accept `std::span<const u8>`, and return `std::expected<std::vector<u8>, Error>`. Raw DEFLATE has no zlib/gzip framing or checksum; PNG needs a zlib wrapper.
+
+Compression uses a 32 KiB LZ77 window and fixed Huffman codes, falling back to stored blocks when smaller. Decompression supports stored, fixed, and dynamic blocks. Compression levels are library-specific; output need not match zlib byte-for-byte.
+
+Canonical decoding is shared with `were::huffman::CanonicalTree<SymbolCount, MaxBits = 15>`. Its `build(lengths, complete = false, allowEmpty = false)` returns `std::expected<void, were::huffman::Error>`. It rejects excessive lengths, oversubscribed codes, and incomplete codes except for a single one-bit symbol; `complete` also rejects that exception. An empty table is accepted only with `allowEmpty`. A failed build invalidates the previous table. `decode(readBit)` returns a symbol index and takes a callback returning `std::expected<u8, were::huffman::Error>` for each bit. DEFLATE maps these errors to its own error enum. Hex decoding supplies readable binary fixtures for compile-time checks.
+
+Empty data compresses to a valid stream. Empty compressed input is truncated. Trailing bytes are rejected.
+Errors: `BadLevel`, `BadData`, `TruncatedInput`, `TrailingData`, `OutputLimit`. Allocation failures throw standard exceptions.
+
+```cpp
+auto packed = were::deflate::compress(u8span(text));
+if (packed) {
+    auto restored = were::deflate::decompress(*packed, text.size());
+}
+```
+
 ## Tests
+
+Huffman runtime checks cover byte counts, empty and single-symbol inputs, duplicate symbols, count overflow, a known optimal merge cost, tree links, and deterministic construction across all 256 byte values.
 
 Base32 checks cover RFC 4648 vectors, invalid input, padding bits, and binary round-trips.
 Ascii85 compile-time checks cover known vectors, invalid input, zero groups, and binary round-trips.
-With CMake 4.1+ and a C++23 module-capable compiler:
+DEFLATE compile-time checks cover stored and fixed vectors, invalid input, and output limits.
+Runtime checks also cover every compression level, empty input, repeated bytes, and binary data exceeding one stored block. Huffman checks include canonical table validation and decoding.
+With CMake 4.1+, Ninja, and C++26-capable Clang (including `clang-scan-deps`) on PATH:
 
-```sh
-cmake -S . -B build -DWERELIB_BUILD_TESTS=ON
-cmake --build build --config Debug
-ctest --test-dir build -C Debug --output-on-failure
+```powershell
+./tools/build.ps1
 ```

@@ -11,9 +11,22 @@ See the [API reference](docs/reference.md) for types, functions, and error behav
 - were.base32.cppm -- Strict RFC4648 Base32 encoding / decoding.
 - were.ascii85.cppm -- Ascii85 encoding / decoding.
 
+### Compression
+- were.huffman.cppm -- Unique byte counts for Huffman coding.
+- were.deflate.cppm -- Native raw DEFLATE compression / decompression; no dependencies.
+
 
 # Using werelib in your projects!
 ### Cmake
+`tools/build.ps1` configures, builds, and tests with Ninja and Clang. Install CMake 4.1+, Ninja, and a C++26-capable Clang (including `clang-scan-deps`) on your PATH.
+
+```powershell
+./tools/build.ps1
+./tools/build.ps1 -Configuration Release
+```
+
+Debug is the default. Build output goes to `build/ninja/<Configuration>`. The script can be invoked from any working directory.
+
 (Optional if you wish to make it shared)
 ```cmake
 set(WERELIB_SHARED ON CACHE BOOL "" FORCE)

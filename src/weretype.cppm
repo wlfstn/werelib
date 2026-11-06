@@ -81,7 +81,7 @@ export namespace were {
 		static constexpr T min = std::numeric_limits<T>::min();
 		static constexpr T max = std::numeric_limits<T>::max();
 		static consteval u64 cardinality() requires (memsize<T>::bits < 64) {
-			return std::uint64_t{1} << memsize<T>::bits;
+			return u64{1} << memsize<T>::bits;
 		}
 	};
 
