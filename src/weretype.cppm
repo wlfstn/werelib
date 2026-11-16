@@ -1,5 +1,6 @@
 module;
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <concepts>
@@ -29,6 +30,9 @@ export {
 	
 	using f32 = float;
 	using f64 = double;
+
+	using usize = std::size_t;
+	using isize = std::ptrdiff_t;
 	
 	constexpr auto bytewidth = std::numeric_limits<unsigned char>::digits;
 
@@ -108,4 +112,18 @@ export namespace were {
 			return std::views::enumerate(std::forward<R>(range));
 		}
 	#endif
+
+	template<typename T, std::size_t N>
+	struct ring {
+		static_assert(N > 0);
+
+		std::array<T, N> data{};
+		std::size_t next{};
+
+		template<typename U>
+		void push(U&& value) {
+			data[next] = std::forward<U>(value);
+			next = (next + 1) % N;   
+		}
+	};
 }
