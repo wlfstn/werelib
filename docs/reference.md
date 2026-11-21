@@ -4,7 +4,7 @@
 
 `import weretype;`
 
-Types and casts are global; range helpers and `Result` are in `were`.
+Types and casts are global. Range and startup helpers and `result` are in `were`.
 
 | Type | Meaning |
 | --- | --- |
@@ -12,7 +12,7 @@ Types and casts are global; range helpers and `Result` are in `were`.
 | `u8`, `u16`, `u32`, `u64` | Unsigned fixed-width integers |
 | `i8`, `i16`, `i32`, `i64` | Signed fixed-width integers |
 | `f32`, `f64` | `float`, `double` |
-| `were::Result<T = void>` | `std::expected<T, std::string>` |
+| `were::result<T = void>` | `std::expected<T, std::string>` |
 
 | Helper | Behavior |
 | --- | --- |
@@ -22,6 +22,13 @@ Types and casts are global; range helpers and `Result` are in `were`.
 | `u8span(input)` | Views object bytes as `std::span<const u8>`; input must outlive the view |
 | `were::thru(count)` | Index view over `[0, count)` |
 | `were::thru(range)` | View of `(index, element)` pairs, starting at zero |
+
+`were::requisite<T = void>` is a class derived from `were::result<T>`. Use it
+for executable startup operations that must succeed. On success, `.unwrap()`
+moves the stored value out and returns it by value. For `were::requisite<>`,
+`.unwrap()` returns normally on success. On failure, `.unwrap()` prints the
+error with a `Fatal: ` prefix to stderr and calls `std::exit(EXIT_FAILURE)`,
+which does not unwind local objects.
 
 ## Encodings
 
@@ -140,5 +147,7 @@ Runtime checks also cover every compression level, empty input, repeated bytes, 
 With CMake 4.1+, Ninja, and C++26-capable Clang (including `clang-scan-deps`) on PATH:
 
 ```powershell
-./tools/build.ps1
+cmake -S tests -B build/ninja/debug/tests -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/ninja/debug/tests --parallel
+ctest --test-dir build/ninja/debug/tests --output-on-failure
 ```

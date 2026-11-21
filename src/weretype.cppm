@@ -4,11 +4,14 @@ module;
 #include <cstddef>
 #include <cstdint>
 #include <concepts>
+#include <cstdio>
+#include <cstdlib>
 #include <limits>
 #include <string>
 #include <ranges>
 #include <expected>
 #include <span>
+#include <type_traits>
 #include <utility>
 
 export module weretype;
@@ -89,9 +92,9 @@ export namespace were {
 		}
 	};
 
-	// Alias for std::expected<T,E>
+	// Default for std::expected<T,E>
 	template <typename T = void>
-	using Result = std::expected<T, std::string>;
+	using result = std::expected<T, std::string>;
 
 	// thru(count) -- indices from zero up to, but excluding, count.
 	[[nodiscard]] constexpr
