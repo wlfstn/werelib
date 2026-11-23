@@ -35,7 +35,7 @@ export {
 	using f64 = double;
 
 	using usize = std::size_t;
-	using isize = std::ptrdiff_t;
+	using isize = std::intptr_t;
 	
 	constexpr auto bytewidth = std::numeric_limits<unsigned char>::digits;
 
