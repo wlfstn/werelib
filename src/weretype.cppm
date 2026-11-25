@@ -36,6 +36,14 @@ export {
 
 	using usize = std::size_t;
 	using isize = std::intptr_t;
+
+	using str8 = std::u8string;
+	using str16 = std::u16string;
+	using str32 = std::u32string;
+
+	using sv8 = std::u8string_view;
+	using sv16 = std::u16string_view;
+	using sv32 = std::u32string_view;
 	
 	constexpr auto bytewidth = std::numeric_limits<unsigned char>::digits;
 
